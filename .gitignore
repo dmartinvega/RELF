@@ -13,6 +13,9 @@ result_videos/*
 data/hpatches-sequences-release.tar.gz
 data/st_peters_square_dataset/
 data/roto360/
+data/hpatches-sequences-release/
+data/coco
+data/SUN2012Images
 data/coco/
 data/roto360
 
@@ -38,3 +41,6 @@ evaluation/ori_estimators
 baselines/extract_KeyNet/model/HyNet/weights/HardNet++.pth
 baselines/extract_KeyNet/model/HyNet/weights/HyNet_ND.pth
 baselines/extract_KeyNet/model/HyNet/weights/HyNet_YOS.pth
+
+trained_models/
+.idea

@@ -1,5 +1,5 @@
-import os, cv2, tqdm, torch
 from config import get_config
+from datasets.utils.base_utils import draw_keypoints_in_evaluation_image
 from utils.logger import Logger, AverageMeterMatching
 from model.descriptor_utils import DescGroupPoolandNorm
 from utils.extract_utils import get_image_list
@@ -25,7 +25,7 @@ class EvaluatePlanarScenes:
 
         ## define the keypoint detector
         if args.detector == 'sift':
-            det = SIFT_detector()         
+            det = SIFT_detector()
         elif args.detector == 'gift':
             det = GIFT_SuperPoint()
         elif args.detector == 'superpoint':
@@ -81,7 +81,7 @@ class EvaluatePlanarScenes:
         if self.eval_dataset == 'roto360':
             return '_rot0.jpg' in imname
         elif self.eval_dataset == 'hpatches' or  self.eval_dataset == 'hpatches_val':
-            return '1.ppm' in imname 
+            return '1.ppm' in imname
         else:
             raise NotImplementedError
 
@@ -103,10 +103,13 @@ class EvaluatePlanarScenes:
         ## treat high-resolution
         if max(image.shape) > 3000:
             image = F.interpolate(image.unsqueeze(0), scale_factor=0.5 , mode='bilinear', align_corners=True).squeeze(0)
-        
+
         kpts, descs = self.detect_keypoints(imname)
         if model != None:
             descs = model(image.unsqueeze(0).float().cuda(), torch.from_numpy(kpts).unsqueeze(0).float().cuda())
+
+        # next call is optional, if you are debugging and want to check keypoints make sense
+        draw_keypoints_in_evaluation_image(imname, kpts)
 
         return kpts[:, :2], descs, imname
 
@@ -114,8 +117,8 @@ class EvaluatePlanarScenes:
         if baseline:
             ### A. baseline evaluation
             k1 = src_kpts[:, :2]; k2 = trg_kpts[:, :2]
-            d1 = src_descs 
-            d2 = trg_descs 
+            d1 = src_descs
+            d2 = trg_descs
         else:
             ### B. ours evaluation
             k1, d1 = self.pool_and_norm.desc_pool_and_norm_infer(torch.tensor(src_kpts).unsqueeze(0), src_descs)

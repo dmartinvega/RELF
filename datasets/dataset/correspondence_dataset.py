@@ -11,7 +11,7 @@ from .homography import compute_approximated_affine_batch, sample_homography
 from .photometric_augmentation import *
 from .transformer import TransformerCV
 from ..utils.augmentation_utils import add_noise, gaussian_blur, jpeg_compress
-from ..utils.base_utils import gray_repeats, get_rot_m, normalize_image, tensor_to_image
+from ..utils.base_utils import gray_repeats, normalize_image, draw_keypoints_in_image_pair
 
 
 class CorrespondenceDataset(Dataset):
@@ -123,6 +123,10 @@ class CorrespondenceDataset(Dataset):
         # scale_offset=torch.tensor(scale_offset,dtype=torch.int32)
         # rotate_offset=torch.tensor(rotate_offset,dtype=torch.int32)
 
+        # next two calls are optional, if you are debugging and want to check keypoints make sense
+        draw_keypoints_in_image_pair(img0, pix_pos0, 0)
+        draw_keypoints_in_image_pair(img1, pix_pos1, 1)
+
         img0 = normalize_image(img0)
         img1 = normalize_image(img1)        
         pix_pos0=torch.tensor(pix_pos0, dtype=torch.float32)
@@ -143,7 +147,7 @@ class CorrespondenceDataset(Dataset):
 
         return ret
         # return img_list0,pts_list0,pix_pos0,grid_list0,img_list1,pts_list1,pix_pos1,grid_list1,scale_offset,rotate_offset,H
-        
+
     def add_homography_background(self, img, cur_path, H):
         bpth = self.generate_background_pth(cur_path)
 
@@ -151,7 +155,8 @@ class CorrespondenceDataset(Dataset):
         bimg = cv2.resize(imread(bpth), (w, h))
         if len(bimg.shape) == 2: bimg = np.repeat(bimg[:, :, None], 3, axis=2)
         if bimg.shape[2] > 3: bimg = bimg[:, :, :3]
-        msk_tgt = cv2.warpPerspective(np.ones([h, w], np.uint8), H, (w, h), flags=cv2.INTER_NEAREST).astype(np.bool)
+        msk_tgt = cv2.warpPerspective(np.ones([h, w], np.uint8), H, (w, h), flags=cv2.INTER_NEAREST)
+        msk_tgt = msk_tgt.astype(np.bool_)
         img[np.logical_not(msk_tgt)] = bimg[np.logical_not(msk_tgt)]
         return img
 
